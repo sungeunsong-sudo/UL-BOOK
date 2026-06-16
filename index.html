@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UL 규정 안내 AI 어시스턴트</title>
+  <!-- Tailwind CSS (스타일링) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons (아이콘) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Mermaid.js (흐름도 도식화) -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    // Mermaid 초기화
+    mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+  </script>
+  <style>
+    /* 스크롤바 커스텀 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans h-screen flex flex-col overflow-hidden text-slate-800">
+
+  <!-- 상단 네비게이션 헤더 -->
+  <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-3">
+      <div class="bg-white p-2 rounded-lg text-blue-700">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">UL Standard Assistant</h1>
+        <p class="text-xs text-blue-200">기구개발자 및 신뢰성 평가자를 위한 대화형 규정 안내 시스템</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-4 text-sm">
+      <span class="bg-blue-600/50 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> 웹 버전 동작 중
+      </span>
+    </div>
+  </header>
+
+  <!-- 메인 레이아웃 -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- 왼쪽 사이드바: 규격 퀵메뉴 -->
+    <aside class="w-80 bg-white border-r border-slate-200 flex flex-col">
+      <div class="p-4 border-b border-slate-100">
+        <div class="relative">
+          <input type="text" id="sidebarSearch" placeholder="규격 번호 또는 키워드 검색..." 
+                 class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <i data-lucide="search" class="absolute left-3 top-2.5 w-4.5 h-4.5 text-slate-400"></i>
+        </div>
+      </div>
+      
+      <!-- 규격 리스트 -->
+      <nav class="flex-1 overflow-y-auto p-4 space-y-2" id="standardList">
+        <!-- JS로 동적 생성됨 -->
+      </nav>
+
+      <!-- 하단 안내 정보 -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 space-y-1">
+        <p class="font-semibold text-slate-700">💡 꿀팁!</p>
+        <p>오른쪽 대화창에 "난연 규격 알려줘" 또는 "배터리 충격 시험"이라고 자유롭게 질문해 보세요.</p>
+      </div>
+    </aside>
+
+    <!-- 중앙 대화형 UI 영역 -->
+    <main class="flex-1 flex flex-col bg-slate-50">
+      
+      <!-- 대화 기록 창 -->
+      <div id="chatHistory" class="flex-1 overflow-y-auto p-6 space-y-6">
+        <!-- 웰컴 메세지 -->
+        <div class="flex space-x-3 max-w-3xl">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+            <i data-lucide="bot" class="w-5 h-5"></i>
+          </div>
+          <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 text-sm leading-relaxed space-y-2">
+            <p class="font-bold text-blue-700 text-base">반갑습니다! 기구개발 파트너 UL Assistant입니다. 🛠️</p>
+            <p>제품 개발 시 헷갈리는 UL 규정(난연성, 전기안전, 배터리 등)에 대해 무엇이든 물어보세요. 원리부터 판정 기준 흐름도까지 직관적인 그래프로 설명해 드립니다.</p>
+            <div class="pt-2">
+              <p class="text-xs font-semibold text-slate-400 mb-2">추천 질문 키워드:</p>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="sendRecommend('어댑터 케이스 난연 기준')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full text-xs font-medium transition">어댑터 케이스 난연 기준</button>
+                <button onclick="sendRecommend('배터리 폭발 시험 방법')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full text-xs font-medium transition">배터리 폭발 시험 방법</button>
+                <button onclick="sendRecommend('UL 94 등급 판정 기준')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full text-xs font-medium transition">UL 94 등급 판정 기준</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 입력창 영역 -->
+      <div class="p-4 bg-white border-t border-slate-200">
+        <form id="chatForm" class="max-w-4xl mx-auto flex items-center space-x-3">
+          <input type="text" id="userInput" placeholder="현재 설계 중인 제품 부품이나 시험 조건에 대해 설명해 주세요..." required
+                 class="flex-1 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-medium transition flex items-center space-x-2">
+            <span>질문하기</span>
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </form>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- 데이터베이스 및 인터랙션 스크립트 -->
+  <script>
+    // 로컬 UL 규정 데이터베이스
+    const ulDatabase = {
+      "ul94": {
+        id: "ul94",
+        title: "UL 94 (기기 부품용 플라스틱 난연성 시험)",
+        category: "난연성",
+        summary: "장비 내부 부품에 사용되는 플라스틱 재질의 연소 저항성을 측정하는 가장 핵심적인 규격입니다.",
+        checklist: [
+          "외곽 하우징(Enclosure)은 최소 V-1 또는 V-0 등급 원재료 채택 필수",
+          "두께(Thickness)별로 획득된 UL 등급 카드가 상이하므로 실제 설계 두께 매칭 확인",
+          "시편 두께가 3.0mm 이하인 경우 박판 대응 가능 난연 등급인지 확인"
+        ],
+        flowchart: `graph TD
+          A[UL 94 난연 시험 시작] --> B{연소 시험 방향 결정}
+          B -->|수평 연소| C[HB 시험]
+          B -->|수직 연소| D[V-0, V-1, V-2 시험]
+          
+          C --> C1{1차 불꽃 접촉 후 잔염 확인}
+          C1 -->|합격| C_OK[HB 등급 판정]
+          C1 -->|불합격| FAIL[사용 불가]
+          
+          D --> D1{10초 간 불꽃 접촉 2회 실시}
+          D1 --> D2{평균 잔염 시간 측정}
+          D2 -->|10초 이내 & 드립핑 무| V0[V-0 등급 획득 ⭐]
+          D2 -->|30초 이내 & 드립핑 무| V1[V-1 등급 획득]
+          D2 -->|30초 이내 & 드립핑 유| V2[V-2 등급 획득]
+          D2 -->|30초 초과| FAIL`
+      },
+      "ul1642": {
+        id: "ul1642",
+        title: "UL 1642 (리튬 배터리 안전 기준)",
+        category: "배터리 안전",
+        summary: "리튬 배터리 셀이 제품 사용 중 전기적/기계적 물리 남용 상태에 처했을 때 폭발, 발화가 일어나지 않는지 평가합니다.",
+        checklist: [
+          "셀 제조사의 UL 1642 Yellow Card 보유 여부 확인",
+          "배터리 팩 외각 설계 시 외부 충격을 흡수할 수 있는 완충 구조 설계",
+          "보호 회로(PCM) 적용 시 단락 보호 반응 시간 검증"
+        ],
+        flowchart: `graph TD
+          A[UL 1642 리튬전지 시험] --> B{시험 종류 구분}
+          B --> C[전기적 남용 시험]
+          B --> D[기계적 남용 시험]
+          B --> E[환경 위험 시험]
+          
+          C --> C1[과충전 / 과방전 / 외부 단락]
+          D --> D1[압착 Crush / 충격 Impact / 기계적 진동]
+          E --> E1[고온 방치 Hot Oven / 열충격]
+          
+          C1 & D1 & E1 --> RES{결과 판정}
+          RES -->|발화 및 폭발 없을 것| PASS[합격 - 승인]
+          RES -->|발화 또는 폭발 발생| REJ[불합격 - 개선 설계 필요]`
+      },
+      "ul746c": {
+        id: "ul746c",
+        title: "UL 746C (전기 기기용 플라스틱 재질 평가)",
+        category: "내환경성",
+        summary: "야외 노출용 혹은 고전압 제품의 플라스틱이 장기적인 자외선, 고온 환경 하에서 절연 성능과 난연성을 유지하는지 평가합니다.",
+        checklist: [
+          "실외 노출 장비의 경우 UV 노출(F1, F2 등급) 원재료 사용 확인",
+          "글로우 와이어(Glow Wire) 시편 테스트 온도 적합성 체크",
+          "볼 프레셔(Ball Pressure) 변형 한계 충족 여부 확인"
+        ],
+        flowchart: `graph TD
+          A[UL 746C 고분자 소재 평가] --> B{실외 노출용 제품인가?}
+          B -->|YES| C[자외선 Exposure & 수침 시험 추진]
+          B -->|NO| D[실내형 일반 열 안정성 검증]
+          
+          C --> C1{물성 유지율 85% 이상?}
+          C1 -->|YES| F1[f1 등급 획득 - 외부 적합]
+          C1 -->|NO| F2[f2 등급 획득 - 제한적 사용]
+          
+          D --> D1[Glow Wire 착화 시험 실시]
+          D1 --> D_OK[실내용 승인]`
+      }
+    };
+
+    // 사이드바 목록 생성 함수
+    function renderSidebar() {
+      const listContainer = document.getElementById("standardList");
+      listContainer.innerHTML = "";
+      
+      Object.values(ulDatabase).forEach(std => {
+        const item = document.createElement("button");
+        item.className = "w-full text-left p-3 rounded-lg hover:bg-slate-50 border border-slate-100 transition flex flex-col space-y-1 focus:outline-none focus:ring-2 focus:ring-blue-500";
+        item.onclick = () => showStandardDetail(std.id);
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${std.category}</span>
+            <span class="text-xs text-slate-400 font-mono">${std.id.toUpperCase()}</span>
+          </div>
+          <span class="text-sm font-semibold text-slate-800">${std.title}</span>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+
+    // 퀵클릭 상세 정보 출력
+    function showStandardDetail(id) {
+      const std = ulDatabase[id];
+      if (!std) return;
+
+      appendMessage("bot", `
+        <div class="space-y-4">
+          <div class="flex items-center space-x-2 text-blue-700">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+            <span class="font-bold text-lg">${std.title} 상세 안내</span>
+          </div>
+          <p class="text-slate-600">${std.summary}</p>
+          
+          <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-2">
+            <p class="font-bold text-blue-800 text-sm flex items-center gap-1">
+              <i data-lucide="check-square" class="w-4 h-4"></i> 기구설계 핵심 체크리스트
+            </p>
+            <ul class="list-disc pl-5 text-xs text-slate-700 space-y-1">
+              ${std.checklist.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="space-y-1">
+            <p class="font-bold text-slate-700 text-sm">🔄 판정 기준 흐름도 (Mermaid)</p>
+            <div class="mermaid bg-slate-50 p-3 rounded-xl border border-slate-200 overflow-x-auto">
+              ${std.flowchart}
+            </div>
+          </div>
+        </div>
+      `);
+      
+      // 새로 삽입된 마크업 내부의 Lucide 아이콘 및 Mermaid 흐름도 렌더링
+      lucide.createIcons();
+      renderMermaid();
+    }
+
+    // Mermaid 흐름도 비동기 렌더링 지원 함수
+    function renderMermaid() {
+      try {
+        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+      } catch (err) {
+        console.error("Mermaid 렌더링 오류:", err);
+      }
+    }
+
+    // 메시지창 추가 함수
+    function appendMessage(sender, contentHTML) {
+      const chatHistory = document.getElementById("chatHistory");
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `flex space-x-3 max-w-3xl ${sender === 'user' ? 'ml-auto flex-row-reverse space-x-reverse' : ''}`;
+      
+      const avatar = sender === 'user' 
+        ? `<div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center"><i data-lucide="user" class="w-4 h-4"></i></div>`
+        : `<div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center"><i data-lucide="bot" class="w-4 h-4"></i></div>`;
+      
+      const bubbleClass = sender === 'user'
+        ? `bg-blue-600 text-white p-3.5 rounded-2xl shadow-sm text-sm leading-relaxed`
+        : `bg-white text-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 text-sm leading-relaxed space-y-2`;
+
+      messageDiv.innerHTML = `
+        ${avatar}
+        <div class="${bubbleClass}">
+          ${contentHTML}
+        </div>
+      `;
+      
+      chatHistory.appendChild(messageDiv);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      lucide.createIcons();
+    }
+
+    // 추천 질문 클릭 시 실행
+    function sendRecommend(text) {
+      document.getElementById("userInput").value = text;
+      handleUserSubmit();
+    }
+
+    // 사용자 입력 제출 핸들링
+    function handleUserSubmit() {
+      const inputField = document.getElementById("userInput");
+      const text = inputField.value.trim();
+      if (!text) return;
+
+      // 1. 유저 말풍선 추가
+      appendMessage("user", text);
+      inputField.value = "";
+
+      // 2. 어시스턴트 판단 로직 (간단한 키워드 기반 매칭봇)
+      setTimeout(() => {
+        let responseHTML = "";
+        
+        if (text.includes("난연") || text.includes("케이스") || text.includes("어댑터") || text.includes("94")) {
+          const std = ulDatabase.ul94;
+          responseHTML = `
+            <p><strong>'어댑터 케이스 난연성'</strong> 및 <strong>'UL 94'</strong> 관련 답변입니다. 🔌</p>
+            <p>어댑터와 같이 외부 충격 및 화재 전파 위험이 높은 전기 부품용 플라스틱 하우징의 경우, 안전을 위해 최소 <strong>UL 94 V-1 또는 V-0</strong> 등급의 원재료가 필수적으로 사용되어야 합니다.</p>
+            
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 my-2 text-xs space-y-1">
+              <p class="font-bold text-blue-800"><i data-lucide="check-circle" class="inline w-3.5 h-3.5 mr-1"></i> 추천 설계 가이드</p>
+              <p>• 플라스틱 원재료 선택 시 제조사의 정식 UL Yellow Card 데이터 상의 <b>두께별 난연 인증 여부</b>를 반드시 대조해 설계하세요.</p>
+            </div>
+            
+            <div class="mermaid bg-slate-50 p-3 rounded-xl border border-slate-200 overflow-x-auto text-xs my-2">
+              ${std.flowchart}
+            </div>
+            <p class="text-xs text-slate-500">상세한 다른 규정을 보고 싶으시면 왼쪽의 사이드바 메뉴를 클릭해 보세요.</p>
+          `;
+        } 
+        else if (text.includes("배터리") || text.includes("전지") || text.includes("폭발") || text.includes("1642")) {
+          const std = ulDatabase.ul1642;
+          responseHTML = `
+            <p><strong>'리튬 배터리 안전'</strong> 및 <strong>'UL 1642'</strong> 관련 답변입니다. 🔋</p>
+            <p>리튬 배터리는 낙하 충격, 외부 압착 등의 가혹한 상황에 직면할 때 발화 위험이 매우 높기 때문에 아래 도식화된 세부 시험들을 통과해야 정식 완제품 조립이 승인됩니다.</p>
+            
+            <div class="mermaid bg-slate-50 p-3 rounded-xl border border-slate-200 overflow-x-auto text-xs my-2">
+              ${std.flowchart}
+            </div>
+            
+            <div class="bg-orange-50 p-3 rounded-xl border border-orange-100 my-2 text-xs">
+              <p class="font-bold text-orange-800"><i data-lucide="alert-triangle" class="inline w-3.5 h-3.5 mr-1"></i> 신뢰성 기구설계 유의사항</p>
+              <p>배터리가 내장되는 장비 설계 시, 외부 압력(Crush) 시험 시 날카로운 모서리 등이 배터리 겉면을 찌르지 않도록 부드러운 하우징 외관 가이드라인 설계가 권장됩니다.</p>
+            </div>
+          `;
+        } 
+        else {
+          responseHTML = `
+            <p>입력하신 키워드에 적절한 특화 가이드를 찾지 못했습니다. 😢</p>
+            <p>대신 기구개발에서 가장 많이 검증하는 <strong>'UL 746C 고분자 소재 내구성 규정'</strong>의 종합 분석 흐름도를 추천해 드립니다.</p>
+            
+            <div class="mermaid bg-slate-50 p-3 rounded-xl border border-slate-200 overflow-x-auto text-xs my-2">
+              ${ulDatabase.ul746c.flowchart}
+            </div>
+            <p class="text-xs text-slate-500">검색창에 '난연성'이나 '배터리'와 같이 단어 위주로 입력해 보시면 최적의 규정 흐름도를 띄워 드립니다.</p>
+          `;
+        }
+
+        appendMessage("bot", responseHTML);
+        renderMermaid();
+      }, 500);
+    }
+
+    // 폼 전송 이벤트 바인딩
+    document.getElementById("chatForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleUserSubmit();
+    });
+
+    // 화면 로드 시 실행
+    window.addEventListener("DOMContentLoaded", () => {
+      renderSidebar();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
